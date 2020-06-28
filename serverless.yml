@@ -1,0 +1,126 @@
+service: todo-be
+
+plugins:
+  - serverless-offline
+
+custom:
+  allowedHeaders:
+    - Accept
+    - Content-Type
+    - Content-Length
+    - Authorization
+    - X-Amz-Date
+    - X-Api-Key
+    - X-Amz-Security-Token
+    - X-Amz-User-Agent
+    - app_user_id
+    - app_user_name
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  region: ap-south-1
+  stage: local
+  memorySize: 128
+  timeout: 5
+  endpointType: regional
+  environment:
+    TODO_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+  iamRoleStatements:
+    - Effect: Allow
+      Action: 
+        - dynamodb:Query
+        - dynamodb:PutItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.TODO_TABLE}"
+
+functions:
+  add-todo:
+    handler: api/add-todo.handler
+    description: POST /todo
+    events:
+      - http:
+          path: todo
+          method: post
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}
+
+  update-todo:
+    handler: api/update-todo.handler
+    description: PATCH /todo
+    events:
+      - http:
+          path: todo
+          method: patch
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}
+
+  get-todos:
+    handler: api/get-todos.handler
+    description: GET /todos
+    events:
+      - http:
+          path: todos
+          method: get
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}
+
+  get-todo:
+    handler: api/get-todo.handler
+    description: GET /todo/n/{todo_id}
+    events:
+      - http:
+          path: todo/n/{todo_id}
+          method: get
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}
+
+  delete-todo:
+    handler: api/delete-todo.handler
+    description: DELETE /todo
+    events:
+      - http:
+          path: todo/t/{timestamp}
+          method: delete
+          cors:
+            origin: '*'
+            headers: ${self:custom.allowedHeaders}
+  
+resources:
+  Resources:
+    TodoTable:
+      Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${self:provider.environment.TODO_TABLE}
+        AttributeDefinitions:
+          - AttributeName: user_id
+            AttributeType: S
+          - AttributeName: timestamp
+            AttributeType: N
+          - AttributeName: todo_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: user_id
+            KeyType: HASH
+          - AttributeName: timestamp
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        GlobalSecondaryIndexes:
+          - IndexName: todo_id-index
+            KeySchema:
+              - AttributeName: todo_id
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+
+

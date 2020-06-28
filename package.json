@@ -1,0 +1,19 @@
+{
+  "name": "todo-be",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.705.0",
+    "moment": "^2.27.0",
+    "serverless-offline": "^6.4.0",
+    "underscore": "^1.10.2",
+    "uuid": "^8.2.0"
+  }
+}
